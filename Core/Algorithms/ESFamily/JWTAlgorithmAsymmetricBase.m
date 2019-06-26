@@ -82,8 +82,7 @@ NSString *const JWTAlgorithmAsymmetricFamilyErrorDomain = @"io.jwt.jwa.asymmetri
 
 typedef NS_ENUM(NSInteger, JWTAlgorithmAsymmetricBase__AlgorithmType) {
     JWTAlgorithmAsymmetricBase__AlgorithmType__RS,
-    JWTAlgorithmAsymmetricBase__AlgorithmType__ES,
-    JWTAlgorithmAsymmetricBase__AlgorithmType__PS
+    JWTAlgorithmAsymmetricBase__AlgorithmType__ES
 };
 typedef NS_ENUM(NSInteger, JWTAlgorithmAsymmetricBase__AlgorithmNumber) {
     JWTAlgorithmAsymmetricBase__AlgorithmNumber__256,
@@ -182,37 +181,8 @@ typedef NS_ENUM(NSInteger, JWTAlgorithmAsymmetricBase__AlgorithmNumber) {
 @implementation JWTAlgorithmAsymmetricBase__Prior10 @end
 
 #import <Security/Security.h>
-#if JWT_CRYPTO_MODERN_API_IS_ALLOWED
-SecKeyAlgorithm chooseAlgorithm(NSNumber *type, NSNumber *number) {
-    if (SecKeyIsAlgorithmSupported == NULL) {
-        return NULL;
-    }
-    else {
-        switch ((JWTAlgorithmAsymmetricBase__AlgorithmNumber)number.integerValue) {
-            case JWTAlgorithmAsymmetricBase__AlgorithmNumber__256:
-                switch ((JWTAlgorithmAsymmetricBase__AlgorithmType)type.integerValue) {
-                    case JWTAlgorithmAsymmetricBase__AlgorithmType__RS: return kSecKeyAlgorithmRSASignatureMessagePKCS1v15SHA256;
-                    case JWTAlgorithmAsymmetricBase__AlgorithmType__ES: return kSecKeyAlgorithmECDSASignatureMessageX962SHA256;
-                    case JWTAlgorithmAsymmetricBase__AlgorithmType__PS: return kSecKeyAlgorithmRSASignatureMessagePSSSHA256;
-                }
-            case JWTAlgorithmAsymmetricBase__AlgorithmNumber__384:
-                switch ((JWTAlgorithmAsymmetricBase__AlgorithmType)type.integerValue) {
-                    case JWTAlgorithmAsymmetricBase__AlgorithmType__RS: return kSecKeyAlgorithmRSASignatureMessagePKCS1v15SHA384;
-                    case JWTAlgorithmAsymmetricBase__AlgorithmType__ES: return kSecKeyAlgorithmECDSASignatureMessageX962SHA384;
-                    case JWTAlgorithmAsymmetricBase__AlgorithmType__PS: return kSecKeyAlgorithmRSASignatureMessagePSSSHA384;
-                    default: break;
-                }
-            case JWTAlgorithmAsymmetricBase__AlgorithmNumber__512:
-                switch ((JWTAlgorithmAsymmetricBase__AlgorithmType)type.integerValue) {
-                    case JWTAlgorithmAsymmetricBase__AlgorithmType__RS: return kSecKeyAlgorithmRSASignatureMessagePKCS1v15SHA512;
-                    case JWTAlgorithmAsymmetricBase__AlgorithmType__ES: return kSecKeyAlgorithmECDSASignatureMessageX962SHA512;
-                    case JWTAlgorithmAsymmetricBase__AlgorithmType__PS: return kSecKeyAlgorithmRSASignatureMessagePSSSHA512;
-                }
-        }
-        return NULL;
-    }
-}
 
+#if JWT_CRYPTO_MODERN_API_IS_ALLOWED
 #ifdef NS_AVAILABLE
 NS_AVAILABLE(10_12, 10_0)
 #endif
@@ -222,7 +192,55 @@ NS_AVAILABLE(10_12, 10_0)
 @end
 @implementation JWTAlgorithmAsymmetricBase__After10
 - (SecKeyAlgorithm)chooseAlgorithmByType:(NSNumber *)type number:(NSNumber *)number {
-    return chooseAlgorithm(type, number);
+    if (SecKeyIsAlgorithmSupported == NULL) {
+        return NULL;
+    }
+    else {
+        SecKeyAlgorithm result = NULL;
+        switch ((JWTAlgorithmAsymmetricBase__AlgorithmType)type.integerValue) {
+            case JWTAlgorithmAsymmetricBase__AlgorithmType__RS: {
+                switch ((JWTAlgorithmAsymmetricBase__AlgorithmNumber)number.integerValue) {
+                    case JWTAlgorithmAsymmetricBase__AlgorithmNumber__256: {
+                        result = kSecKeyAlgorithmRSASignatureMessagePKCS1v15SHA256;
+                        break;
+                    }
+                    case JWTAlgorithmAsymmetricBase__AlgorithmNumber__384: {
+                        result = kSecKeyAlgorithmRSASignatureMessagePKCS1v15SHA384;
+                        break;
+                    }
+                    case JWTAlgorithmAsymmetricBase__AlgorithmNumber__512: {
+                        result = kSecKeyAlgorithmRSASignatureMessagePKCS1v15SHA512;
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case JWTAlgorithmAsymmetricBase__AlgorithmType__ES: {
+                switch ((JWTAlgorithmAsymmetricBase__AlgorithmNumber)number.integerValue) {
+                    case JWTAlgorithmAsymmetricBase__AlgorithmNumber__256: {
+                        result = kSecKeyAlgorithmECDSASignatureMessageX962SHA256;
+                        break;
+                    }
+                    case JWTAlgorithmAsymmetricBase__AlgorithmNumber__384: {
+                        result = kSecKeyAlgorithmECDSASignatureMessageX962SHA384;
+                        break;
+                    }
+                    case JWTAlgorithmAsymmetricBase__AlgorithmNumber__512: {
+                        result = kSecKeyAlgorithmECDSASignatureMessageX962SHA512;
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            default:
+                break;
+        }
+        return result;
+    }
 }
 
 - (SecKeyAlgorithm)algorithm {
@@ -288,7 +306,7 @@ NS_AVAILABLE(10_12, 10_0)
     }
 }
 
-- (NSData *)signHash:(NSData *)hash key:(NSData *)key error:(NSError *__autoreleasing *)error {    
+- (NSData *)signHash:(NSData *)hash key:(NSData *)key error:(NSError *__autoreleasing *)error {
     id<JWTCryptoKeyExtractorProtocol> theExtractor = self.keyExtractor ?: [JWTCryptoKeyExtractor privateKeyInP12];
     NSError *extractKeyError = nil;
     id <JWTCryptoKeyProtocol> keyItem = self.signKey ?: [theExtractor keyFromData:key parameters:[self signKeyExtractorParameters] error:&extractKeyError];
@@ -358,6 +376,7 @@ NS_AVAILABLE(10_12, 10_0)
 //@interface JWTAlgorithmRSFamilyMember : JWTAlgorithmRSBaseIOS @end
 //#endif
 // (TARGET_OS_IPHONE && __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_10_0) ||
+API_AVAILABLE(ios(10.0))
 @interface JWTAlgorithmAsymmetricBase__FamilyMember :
 #if JWT_CRYPTO_MODERN_API_IS_ALLOWED
 JWTAlgorithmAsymmetricBase__After10
@@ -380,7 +399,6 @@ JWTAlgorithmAsymmetricBase__Prior10
     switch (type) {
         case JWTAlgorithmAsymmetricBase__AlgorithmType__RS: return @"RS";
         case JWTAlgorithmAsymmetricBase__AlgorithmType__ES: return @"ES";
-        case JWTAlgorithmAsymmetricBase__AlgorithmType__PS: return @"PS";
         default: return nil;
     }
 }
@@ -390,6 +408,7 @@ JWTAlgorithmAsymmetricBase__Prior10
 }
 @end
 
+API_AVAILABLE(ios(10.0))
 @interface JWTAlgorithmAsymmetricBase__FamilyMember__RS : JWTAlgorithmAsymmetricBase__FamilyMember @end
 
 @implementation JWTAlgorithmAsymmetricBase__FamilyMember__RS
@@ -398,6 +417,7 @@ JWTAlgorithmAsymmetricBase__Prior10
 }
 @end
 
+API_AVAILABLE(ios(10.0))
 @interface JWTAlgorithmAsymmetricBase__FamilyMember__ES : JWTAlgorithmAsymmetricBase__FamilyMember @end
 
 @implementation JWTAlgorithmAsymmetricBase__FamilyMember__ES
@@ -406,23 +426,20 @@ JWTAlgorithmAsymmetricBase__Prior10
 }
 @end
 
-@interface JWTAlgorithmAsymmetricBase__FamilyMember__PS : JWTAlgorithmAsymmetricBase__FamilyMember @end
-
-@implementation JWTAlgorithmAsymmetricBase__FamilyMember__PS
-- (NSNumber *)algorithmType {
-    return @(JWTAlgorithmAsymmetricBase__AlgorithmType__PS);
-}
-@end
-
 @implementation JWTAlgorithmAsymmetricBase (Create)
 + (instancetype)withRS {
-    return [[JWTAlgorithmAsymmetricBase__FamilyMember__RS alloc] init];
+    if (@available(iOS 10.0, *)) {
+        return [[JWTAlgorithmAsymmetricBase__FamilyMember__RS alloc] init];
+    } else {
+        return nil;
+    }
 }
 + (instancetype)withES {
-    return [[JWTAlgorithmAsymmetricBase__FamilyMember__ES alloc] init];
-}
-+ (instancetype)withPS {
-    return [[JWTAlgorithmAsymmetricBase__FamilyMember__PS alloc] init];
+    if (@available(iOS 10.0, *)) {
+        return [[JWTAlgorithmAsymmetricBase__FamilyMember__ES alloc] init];
+    } else {
+        return nil;
+    }
 }
 - (instancetype)with256 {
     return self.setAlgorithmNumber(JWTAlgorithmAsymmetricBase__AlgorithmNumber__256);

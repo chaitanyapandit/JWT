@@ -1,0 +1,10 @@
+framework module JWT {
+	umbrella header "JWT.h"
+	export *
+	module * { export * }
+    
+    explicit module Private {
+        header "JWTAlgorithmErrorDescription+Subclass.h"        
+        export *
+    }
+}

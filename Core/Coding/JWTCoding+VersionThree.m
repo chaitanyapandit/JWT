@@ -16,9 +16,6 @@
 #import "JWTClaimsSetSerializer.h"
 #import "JWTClaimsSetVerifier.h"
 
-#import "JWTAlgorithmDataHolder+FluentStyle.h"
-#import "JWTCodingBuilder+FluentStyle.h"
-
 @implementation JWT (VersionThree)
 + (JWTEncodingBuilder *)encodeWithHolders:(NSArray *)holders {
     return [JWTEncodingBuilder createWithHolders:holders];

@@ -37,8 +37,7 @@
  @param theSecret The secret to use for encryption
  @return An NSData object containing the encrypted payload, or nil if something went wrong.
  */
-- (NSData *)encodePayload:(NSString *)theString withSecret:(NSString *)theSecret __deprecated_and_will_be_removed_in_release_version(JWTVersion_3_0_0);
-
+- (NSData *)encodePayload:(NSString *)theString withSecret:(NSString *)theSecret;
 /**
  Verifies the provided signature using the signed input and verification key
  @param input The header and payload encoded string
@@ -46,7 +45,7 @@
  @param verificationKey The key to use for verifying the signature
  @return YES if the provided signature is valid, NO otherwise
  */
-- (BOOL)verifySignedInput:(NSString *)input withSignature:(NSString *)signature verificationKey:(NSString *)verificationKey __deprecated_and_will_be_removed_in_release_version(JWTVersion_3_0_0);
+- (BOOL)verifySignedInput:(NSString *)input withSignature:(NSString *)signature verificationKey:(NSString *)verificationKey;
 
 @optional
 
