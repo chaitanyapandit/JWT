@@ -71,52 +71,56 @@
                                  (__bridge NSString*)kSecAttrKeySizeInBits : @(sizeInBits)
                                  };
     
-    if (SecKeyCreateWithData != NULL) {
-        CFErrorRef createError = NULL;
-        SecKeyRef key = SecKeyCreateWithData((__bridge CFDataRef)data, (__bridge CFDictionaryRef)attributes, &createError);
-        if (error && createError != NULL) {
-            *error = (__bridge NSError*)createError;
-        }
-        return key;
-    }
-    // oh... not avaialbe API :/
-    else {
-        
-        CFTypeRef result = NULL;
-        NSData *tagData = [tag dataUsingEncoding:NSUTF8StringEncoding];
-        NSDictionary *commonAttributes = @{
-                                           (__bridge NSString*)kSecClass: (__bridge NSString*)kSecClassKey,
-                                           (__bridge NSString*)kSecAttrApplicationTag: tagData,
-                                           (__bridge NSString*)kSecAttrAccessible: (__bridge NSString*)kSecAttrAccessibleWhenUnlocked
-                                           };
-        
-        
-        NSDictionary *addItemAttributes = @{
-                                            (__bridge NSString*)kSecValueData: data,
-                                            (__bridge NSString*)kSecReturnPersistentRef: @(YES),
-                                            };
-        
-        OSStatus addItemStatus = SecItemAdd((__bridge CFDictionaryRef)[self dictionaryByCombiningDictionaries:@[attributes, commonAttributes, addItemAttributes]], &result);
-        if (addItemStatus != errSecSuccess && addItemStatus != errSecDuplicateItem) {
-            // add item error
-            // not duplicate and not added to keychain.
-            return NULL;
-        }
-        
-        NSDictionary *copyAttributes = @{
-                                         (__bridge NSString*)kSecReturnRef: @(YES),
-                                         };
-        
-        CFTypeRef key = NULL;
-        // TODO: Add error handling later.
-        OSStatus copyItemStatus = SecItemCopyMatching((__bridge CFDictionaryRef)[self dictionaryByCombiningDictionaries:@[attributes, commonAttributes, copyAttributes]], &key);
-        if (key == NULL) {
-            // copy item error
-            if (error) {
-                *error = [JWTCryptoSecurity securityErrorWithOSStatus:copyItemStatus];
+    if (@available(iOS 10.0, *)) {
+        if (SecKeyCreateWithData != NULL) {
+            CFErrorRef createError = NULL;
+            SecKeyRef key = SecKeyCreateWithData((__bridge CFDataRef)data, (__bridge CFDictionaryRef)attributes, &createError);
+            if (error && createError != NULL) {
+                *error = (__bridge NSError*)createError;
             }
+            return key;
         }
-        return (SecKeyRef)key;
+        // oh... not avaialbe API :/
+        else {
+            
+            CFTypeRef result = NULL;
+            NSData *tagData = [tag dataUsingEncoding:NSUTF8StringEncoding];
+            NSDictionary *commonAttributes = @{
+                                               (__bridge NSString*)kSecClass: (__bridge NSString*)kSecClassKey,
+                                               (__bridge NSString*)kSecAttrApplicationTag: tagData,
+                                               (__bridge NSString*)kSecAttrAccessible: (__bridge NSString*)kSecAttrAccessibleWhenUnlocked
+                                               };
+            
+            
+            NSDictionary *addItemAttributes = @{
+                                                (__bridge NSString*)kSecValueData: data,
+                                                (__bridge NSString*)kSecReturnPersistentRef: @(YES),
+                                                };
+            
+            OSStatus addItemStatus = SecItemAdd((__bridge CFDictionaryRef)[self dictionaryByCombiningDictionaries:@[attributes, commonAttributes, addItemAttributes]], &result);
+            if (addItemStatus != errSecSuccess && addItemStatus != errSecDuplicateItem) {
+                // add item error
+                // not duplicate and not added to keychain.
+                return NULL;
+            }
+            
+            NSDictionary *copyAttributes = @{
+                                             (__bridge NSString*)kSecReturnRef: @(YES),
+                                             };
+            
+            CFTypeRef key = NULL;
+            // TODO: Add error handling later.
+            OSStatus copyItemStatus = SecItemCopyMatching((__bridge CFDictionaryRef)[self dictionaryByCombiningDictionaries:@[attributes, commonAttributes, copyAttributes]], &key);
+            if (key == NULL) {
+                // copy item error
+                if (error) {
+                    *error = [JWTCryptoSecurity securityErrorWithOSStatus:copyItemStatus];
+                }
+            }
+            return (SecKeyRef)key;
+        }
+    } else {
+        // Fallback on earlier versions
     }
     
     return NULL;

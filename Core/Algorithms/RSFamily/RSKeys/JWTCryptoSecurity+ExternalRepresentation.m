@@ -15,16 +15,20 @@
         return nil;
     }
     
-    if (SecKeyCopyExternalRepresentation != NULL) {
-        CFErrorRef copyError = NULL;
-        NSData *result = (NSData *)CFBridgingRelease(SecKeyCopyExternalRepresentation(key, &copyError));
-        if (error && copyError != NULL) {
-            *error = CFBridgingRelease(copyError);
+    if (@available(iOS 10.0, *)) {
+        if (SecKeyCopyExternalRepresentation != NULL) {
+            CFErrorRef copyError = NULL;
+            NSData *result = (NSData *)CFBridgingRelease(SecKeyCopyExternalRepresentation(key, &copyError));
+            if (error && copyError != NULL) {
+                *error = CFBridgingRelease(copyError);
+                return nil;
+            }
+            return result;
+        }
+        else {
             return nil;
         }
-        return result;
-    }
-    else {
+    } else {
         return nil;
     }
 }
